@@ -1,9 +1,61 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <template id="external_layout_alt">
+        <t t-name="nahe_purchase_order_alternative_report.external_layout_alt">
+            <t t-if="not o" t-set="o" t-value="doc"/>
+
+            <t t-if="not company">
+                <!-- Multicompany -->
+                <t t-if="company_id">
+                    <t t-set="company" t-value="company_id"/>
+                </t>
+                <t t-elif="o and 'company_id' in o and o.company_id.sudo()">
+                    <t t-set="company" t-value="o.company_id.sudo()"/>
+                </t>
+                <t t-else="else">
+                    <t t-set="company" t-value="res_company"/>
+                </t>
+            </t>
+
+            <t t-call="nahe_purchase_order_alternative_report.external_layout_boxed_alt"><t t-out="0"/></t>
+
+        </t>
+    </template>
+
+    <template id="external_layout_boxed_alt">
+        <t t-name="nahe_purchase_order_alternative_report.external_layout_boxed_alt">
+        <div t-attf-class="header o_company_#{company.id}_layout" t-att-style="report_header_style">
+            <div class="o_clean_header">
+            <div class="row">
+                <div class="col-6">
+                    RESUMEN PEDIDO DE COMPRA
+                </div>
+            </div>
+            </div>
+        </div>
+        <div t-attf-class="article o_report_layout_bold o_company_#{company.id}_layout {{  'o_layout_background' if company.layout_background in ['Geometric', 'Custom']  else  '' }}" t-attf-style="background-image: url({{ 'data:image/png;base64,%s' % company.layout_background_image.decode('utf-8') if company.layout_background_image and company.layout_background == 'Custom' else ('/base/static/img/bg_background_template.jpg' if company.layout_background == 'Geometric' else '') }});" t-att-data-oe-model="o and o._name" t-att-data-oe-id="o and o.id" t-att-data-oe-lang="o and o.env.context.get('lang')">
+            <t t-call="web.address_layout"/>
+            <t t-out="0"/>
+        </div>
+
+        <div t-attf-class="footer o_clean_footer o_company_#{company.id}_layout">
+            <div class="row">
+                <div class="col-1">
+                    <ul t-if="report_type == 'pdf'" class="list-inline pagenumber float-right text-center">
+                        <li class="list-inline-item"><strong><span class="page"/></strong></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </t>
+    </template>
+
     <template id="report_purchaseorder_document_alternative">
         <!-- Aquí va tu plantilla QWeb -->
-        <?xml version="1.0"?>
-    <t t-name="purchase.report_purchaseorder_document_alternative">
+    <t t-name="report_purchaseorder_document_alternative">
+        <t t-call="web.html_container">
+        <t t-foreach="docs" t-as="o">
+        <t t-call="nahe_purchase_order_alternative_report.external_layout_alt">
         <t t-set="o" t-value="o.with_context(lang=o.partner_id.lang)"/>
         <t t-set="address">
             <div t-field="o.partner_id" t-options="{&quot;widget&quot;: &quot;contact&quot;, &quot;fields&quot;: [&quot;address&quot;, &quot;name&quot;, &quot;phone&quot;], &quot;no_marker&quot;: True, &quot;phone_icons&quot;: True}"/>
@@ -26,18 +78,19 @@
             <h2 t-if="o.state == 'cancel'">Cancelled Purchase Order #<span t-field="o.name"/></h2>
 
             <div id="informations" class="row mt32 mb32">
-                <div t-if="o.user_id" class="col-3 bm-2">
-                    <strong>Purchase Representative:</strong>
-                    <p t-field="o.user_id" class="m-0"/>
-                </div>
+
                 <div t-if="o.partner_ref" class="col-3 bm-2">
-                    <strong>Your Order Reference:</strong>
+                    <strong>Referencia de pedido:</strong>
                     <p t-field="o.partner_ref" class="m-0"/>
                 </div>
                 <div t-if="o.date_order" class="col-3 bm-2">
-                    <strong>Order Date:</strong>
+                    <strong>Fecha de pedido:</strong>
                     <p t-field="o.date_order" class="m-0"/>
                 </div>
+                <div t-if="o.incoterm_id" class="col-3 bm-2">
+                <strong>Incoterm:</strong>
+                <p t-field="o.incoterm_id.code" class="m-0"/>
+            </div>
             </div>
 
             <table class="table table-sm o_main_table">
@@ -117,8 +170,11 @@
             <div class="oe_structure"/>
         </div>
     </t>
-
+    </t>
+    </t>
+    </t>
     </template>
+
 
     <record id="purchase_order_report_aparadora" model="ir.actions.report">
         <field name="name">Pedido Aparadora</field>
